@@ -96,7 +96,7 @@ class InteractionCreate extends Listener {
             })
 
             await ticket.send({
-               content: `<@${user.id}>, \`\`<@&1056394061084381204>\`\``,
+               content: `<@${user.id}>, <@&1056394061084381204>`,
                embeds: [welcomeEmbed],
                components: [row]
             });
