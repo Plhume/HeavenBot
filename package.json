@@ -1,0 +1,26 @@
+{
+  "name": "heavenbot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Plhume",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.51",
+    "@sapphire/framework": "^5.0.7",
+    "@sapphire/plugin-subcommands": "^6.0.3",
+    "@sapphire/utilities": "^3.15.3",
+    "canvas": "^2.11.2",
+    "cron": "^3.1.6",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "duration": "^0.2.2",
+    "node-cron": "^3.0.3",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "undici": "^6.10.1"
+  }
+}
