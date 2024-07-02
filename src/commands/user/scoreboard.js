@@ -1,5 +1,5 @@
 const { Command } = require('@sapphire/framework');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, Colors } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, Colors } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const levelsPath = path.resolve(__dirname, '../../lib/levels.json');
@@ -9,7 +9,7 @@ class ScoreboardCommand extends Command {
         super(context, {
             ...options,
             name: 'scoreboard',
-            description: 'Affiche les membres du serveur avec leurs niveaux et expériences.'
+            description: 'Affiche les 20 premiers membres avec des boutons pour naviguer entre les pages.'
         });
     }
 
@@ -17,12 +17,13 @@ class ScoreboardCommand extends Command {
         registry.registerChatInputCommand((builder) =>
             builder
                 .setName('scoreboard')
-                .setDescription('Affiche les membres du serveur avec leurs niveaux et expériences.')
+                .setDescription('Affiche les 20 premiers membres avec des boutons pour naviguer entre les pages.')
         );
     }
 
     async chatInputRun(interaction) {
         await interaction.deferReply();
+
         let levels = {};
         if (fs.existsSync(levelsPath)) {
             try {
@@ -39,7 +40,7 @@ class ScoreboardCommand extends Command {
         const itemsPerPage = 20;
         const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
 
-        const generateEmbed = (page) => {
+        const generateEmbed = async (page) => {
             const start = page * itemsPerPage;
             const end = start + itemsPerPage;
             const pageUsers = sortedUsers.slice(start, end);
@@ -49,9 +50,17 @@ class ScoreboardCommand extends Command {
                 .setColor(Colors.Gold)
                 .setFooter({ text: `Page ${page + 1} sur ${totalPages}` });
 
-            pageUsers.forEach((user, index) => {
-                embed.addFields({ name: `${start + index + 1}. ${interaction.guild.members.cache.get(user.userId).user.tag}`, value: `\`\`Niveau: ${user.level}, EXP: ${user.exp}\`\``, inline: false });
-            });
+            for (let i = 0; i < pageUsers.length; i++) {
+                const user = pageUsers[i];
+                try {
+                    const member = await interaction.guild.members.fetch(user.userId);
+                    const username = member.user.tag;
+                    embed.addFields({ name: `${start + i + 1}. ${username}`, value: `Niveau: ${user.level}, EXP: ${user.exp}`, inline: false });
+                } catch (error) {
+                    console.error(`Could not fetch member with ID ${user.userId}:`, error);
+                    embed.addFields({ name: `${start + i + 1}. Utilisateur inconnu`, value: `Niveau: ${user.level}, EXP: ${user.exp}`, inline: false });
+                }
+            }
 
             return embed;
         };
@@ -73,11 +82,11 @@ class ScoreboardCommand extends Command {
 
         let currentPage = 0;
         const embedMessage = await interaction.editReply({
-            embeds: [generateEmbed(currentPage)],
+            embeds: [await generateEmbed(currentPage)],
             components: [generateButtons(currentPage)]
         });
 
-        const collector = embedMessage.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+        const collector = embedMessage.createMessageComponentCollector({ componentType: 'BUTTON', time: 60000 });
 
         collector.on('collect', async i => {
             if (i.user.id !== interaction.user.id) {
@@ -90,7 +99,7 @@ class ScoreboardCommand extends Command {
                 currentPage++;
             }
 
-            await i.update({ embeds: [generateEmbed(currentPage)], components: [generateButtons(currentPage)] });
+            await i.update({ embeds: [await generateEmbed(currentPage)], components: [generateButtons(currentPage)] });
         });
 
         collector.on('end', async () => {
