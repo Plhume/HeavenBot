@@ -1,23 +1,15 @@
 const { Command } = require('@sapphire/framework');
-const {
-    PermissionFlagsBits,
-    CommandInteraction,
-    EmbedBuilder,
-    Colors
-} = require('discord.js');
-const Duration = require('duration');
-
-const { getDevmodeStatus } = require('../../dev')
-const { sendDevmodeLog } = require('../../log')
-const { openDatabase } = require('../../db')
-const { openVoiceDatabase } = require('../../voicedb')
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, Colors } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
+const levelsPath = path.resolve(__dirname, '../../lib/levels.json');
 
 class ScoreboardCommand extends Command {
     constructor(context, options) {
         super(context, {
             ...options,
             name: 'scoreboard',
-            description: 'Permet d\'obtenir le scoreboard des messages envoyés.',
+            description: 'Affiche les membres du serveur avec leurs niveaux et expériences.'
         });
     }
 
@@ -25,64 +17,88 @@ class ScoreboardCommand extends Command {
         registry.registerChatInputCommand((builder) =>
             builder
                 .setName('scoreboard')
-                .setDescription('Permet d\'obtenir le scoreboard des messages envoyés.')
+                .setDescription('Affiche les membres du serveur avec leurs niveaux et expériences.')
         );
     }
 
-    /**
-     * 
-     * @param {CommandInteraction} interaction 
-     */
     async chatInputRun(interaction) {
-        const db = await openDatabase();
-        const vdb = await openVoiceDatabase();
-        if (getDevmodeStatus() === true) {
-            return sendDevmodeLog(interaction)
-        } else {
-            const scoreboard = await db.all('SELECT * FROM messages ORDER BY messageCount DESC LIMIT 50');
-            const serverTotal = await db.get('SELECT SUM(messageCount) as total FROM messages');
-
-            const sb2 = await vdb.all('SELECT userId, time FROM voice ORDER BY time DESC LIMIT 50');
-            const serverTotal2 = await vdb.get('SELECT SUM(time) as totalTime FROM voice');
-
-            const top50PromisesMsg = scoreboard.map(async (row, index) => {
-                const member = await interaction.guild.members.fetch(row.userId).catch(() => null);
-                const user = member ? `<@${member.user.id}>` : 'Utilisateur inconnu';
-                return index + 1 === 1 ? `🥇 ${user} **-** ${row.messageCount}` : index + 1 === 2 ? `🥈 ${user} **-** ${row.messageCount}` : index + 1 === 3 ? `🥉 ${user} **-** ${row.messageCount}` : `\`\`${index + 1}\`\` ${user} **-** ${row.messageCount}`;
-            });
-
-            const top50PromisesVoice = sb2.map(async (row, index) => {
-                const time = row.time;
-                const duration = new Duration(new Date(Date.now() - time), new Date(Date.now()));
-                row.time = duration.toString(1, 2);
-
-                const member = await interaction.guild.members.fetch(row.userId).catch(() => null);
-                const user = member ? `<@${member.user.id}>` : 'Utilisateur inconnu';
-                return index + 1 === 1 ? `🥇 ${user} **-** ${row.time}` : index + 1 === 2 ? `🥈 ${user} **-** ${row.time}` : index + 1 === 3 ? `🥉 ${user} **-** ${row.time}` : `\`\`${index + 1}\`\` ${user} **-** ${row.time}`;
-            });
-
-            const top50Msg = await Promise.all(top50PromisesMsg);
-            const top50Voice = await Promise.all(top50PromisesVoice);
-
-            const scoreEmbed = new EmbedBuilder({
-                title: '🏆 | Classement des messages envoyés',
-                description: '**Total du serveur :** ' + serverTotal.total + ' messages\n**Total des participants :** ' + scoreboard.length + ' participants\n\n' + top50Msg.join('\n'),
-                color: Colors.Navy
-            });
-
-            const totalDuration = new Duration(new Date(Date.now() - serverTotal2.totalTime), new Date(Date.now()));
-            const scoreEmbed2 = new EmbedBuilder({
-                title: '🏆 | Classement des minutes en vocal',
-                description: '**Total du serveur :** ' + totalDuration.toString(1, 2) + '\n**Total des participants :** ' + sb2.length + ' participants\n\n' + top50Voice.join('\n'),
-                color: Colors.Navy
-            });
-
-            await interaction.reply({
-                embeds: [scoreEmbed, scoreEmbed2]
-            })
+        await interaction.deferReply();
+        let levels = {};
+        if (fs.existsSync(levelsPath)) {
+            try {
+                levels = JSON.parse(fs.readFileSync(levelsPath, 'utf8'));
+            } catch (error) {
+                console.error('Error reading levels file:', error);
+            }
         }
+
+        const sortedUsers = Object.keys(levels)
+            .map(userId => ({ userId, ...levels[userId] }))
+            .sort((a, b) => b.level - a.level || b.exp - a.exp);
+
+        const itemsPerPage = 20;
+        const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
+
+        const generateEmbed = (page) => {
+            const start = page * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageUsers = sortedUsers.slice(start, end);
+
+            const embed = new EmbedBuilder()
+                .setTitle('🏆 | Scoreboard')
+                .setColor(Colors.Gold)
+                .setFooter({ text: `Page ${page + 1} sur ${totalPages}` });
+
+            pageUsers.forEach((user, index) => {
+                embed.addFields({ name: `${start + index + 1}. ${interaction.guild.members.cache.get(user.userId).user.tag}`, value: `\`\`Niveau: ${user.level}, EXP: ${user.exp}\`\``, inline: false });
+            });
+
+            return embed;
+        };
+
+        const generateButtons = (page) => {
+            return new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('previous')
+                    .setLabel('Précédent')
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled(page === 0),
+                new ButtonBuilder()
+                    .setCustomId('next')
+                    .setLabel('Suivant')
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled(page === totalPages - 1)
+            );
+        };
+
+        let currentPage = 0;
+        const embedMessage = await interaction.editReply({
+            embeds: [generateEmbed(currentPage)],
+            components: [generateButtons(currentPage)]
+        });
+
+        const collector = embedMessage.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+
+        collector.on('collect', async i => {
+            if (i.user.id !== interaction.user.id) {
+                return i.reply({ content: "Vous ne pouvez pas utiliser ces boutons.", ephemeral: true });
+            }
+
+            if (i.customId === 'previous') {
+                currentPage--;
+            } else if (i.customId === 'next') {
+                currentPage++;
+            }
+
+            await i.update({ embeds: [generateEmbed(currentPage)], components: [generateButtons(currentPage)] });
+        });
+
+        collector.on('end', async () => {
+            await embedMessage.edit({ components: [] });
+        });
     }
 }
+
 module.exports = {
     ScoreboardCommand
 };
