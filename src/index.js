@@ -41,7 +41,7 @@ cron.schedule('1 13 * * *', async () => {
     const top50 = await Promise.all(top50Promises);
 
     const scoreEmbed = new EmbedBuilder({
-        title: '🏆 | Classement des messages envoyés',
+        title: '🏆 | Classement des messages envoyés (OBSOLETE !)',
         description: '**Total du serveur :** ' + serverTotal.total + ' messages\n**Total des participants :** ' + scoreboard.length + ' participants\n\n' + top50.join('\n'),
         color: Colors.Navy
     });

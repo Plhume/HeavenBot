@@ -68,14 +68,14 @@ async function sendCron() {
   const top50Voice = await Promise.all(top50PromisesVoice);
 
   const scoreEmbed = new EmbedBuilder({
-    title: '🏆 | Classement des messages envoyés',
+    title: '🏆 | Classement des messages envoyés (OBSOLETE !)',
     description: '**Total du serveur :** ' + serverTotal.total + ' messages\n**Total des participants :** ' + scoreboard.length + ' participants\n\n' + top50Msg.join('\n'),
     color: Colors.Navy
   });
 
   const totalDuration = new Duration(new Date(Date.now() - serverTotal2.totalTime), new Date(Date.now()));
   const scoreEmbed2 = new EmbedBuilder({
-    title: '🏆 | Classement des minutes en vocal',
+    title: '🏆 | Classement des minutes en vocal (OBSOLETE !)',
     description: '**Total du serveur :** ' + totalDuration.toString(1, 2) + '\n**Total des participants :** ' + sb2.length + ' participants\n\n' + top50Voice.join('\n'),
     color: Colors.Navy
   });
