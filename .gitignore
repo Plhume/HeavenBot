@@ -4,3 +4,4 @@ package-lock.json
 messages.db
 voice.db
 levels.json
+src/lib/lockStatus.json
