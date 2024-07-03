@@ -39,6 +39,23 @@ class GuildMemberAdd extends Listener {
       const logEmbed = new EmbedBuilder({
          title: '👤 | Nouveau membre > logs',
          description: `${member.user.username} vient de rejoindre le serveur.`,
+         fields: [
+            {
+               name: 'ID',
+               value: member.user.id,
+               inline: true
+            },
+            {
+               name: 'Nom',
+               value: member.user.username,
+               inline: true
+            },
+            {
+               name: 'Créé le',
+               value: member.user.createdAt,
+               inline: true
+            }
+         ],
          color: Colors.Blue,
          timestamp: Date.now(),
          footer: {
