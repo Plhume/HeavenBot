@@ -46,21 +46,25 @@ class ScoreboardCommand extends Command {
             const pageUsers = sortedUsers.slice(start, end);
 
             const embed = new EmbedBuilder()
-                .setTitle('🏆 | Scoreboard')
+                .setTitle('🏆 | Classement des Membres')
                 .setColor(Colors.Gold)
-                .setFooter({ text: `Page ${page + 1} sur ${totalPages}` });
+                .setFooter({ text: `Page ${page + 1} sur ${totalPages}` })
+                .setTimestamp();
+
+            let description = '';
 
             for (let i = 0; i < pageUsers.length; i++) {
                 const user = pageUsers[i];
                 try {
                     const member = await interaction.guild.members.fetch(user.userId);
-                    const username = member.user.tag;
-                    embed.addFields({ name: `${start + i + 1}. ${username}`, value: `Niveau: ${user.level}, EXP: ${user.exp}`, inline: false });
+                    description += `**${start + i + 1}.** ${member} - Niveau: \`${user.level}\`, EXP: \`${user.exp}\`\n\n`;
                 } catch (error) {
                     console.error(`Could not fetch member with ID ${user.userId}:`, error);
-                    embed.addFields({ name: `${start + i + 1}. Utilisateur inconnu`, value: `Niveau: ${user.level}, EXP: ${user.exp}`, inline: false });
+                    description += `**${start + i + 1}.** Utilisateur inconnu - Niveau: \`${user.level}\`, EXP: \`${user.exp}\`\n\n`;
                 }
             }
+
+            embed.setDescription(description);
 
             return embed;
         };
@@ -69,12 +73,12 @@ class ScoreboardCommand extends Command {
             return new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
                     .setCustomId('previous')
-                    .setLabel('Précédent')
+                    .setLabel('⬅️ Précédent')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(page === 0),
                 new ButtonBuilder()
                     .setCustomId('next')
-                    .setLabel('Suivant')
+                    .setLabel('➡️ Suivant')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(page === totalPages - 1)
             );
