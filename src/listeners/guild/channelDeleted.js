@@ -18,6 +18,8 @@ class ChannelDeleted extends Listener {
       const client = this.container.client;
       const channelName = channel.name;
 
+      if (channelName.includes('ticket') || channelName.includes('closed')) return;
+
       const logEmbed = new EmbedBuilder({
          title: '💬 | Salon supprimé > logs',
          description: `Le salon **${channelName}** vient d'être supprimé !`,

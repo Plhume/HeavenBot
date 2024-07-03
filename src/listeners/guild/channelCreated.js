@@ -20,6 +20,8 @@ class ChannelCreated extends Listener {
       const channelId = channel.id;
       let parent;
 
+      if (channelName.includes('ticket') || channelName.includes('closed')) return;
+
       if (!parent) {
          parent = 'Aucune'
       } else {

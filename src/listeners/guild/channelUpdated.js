@@ -17,6 +17,7 @@ class ChannelUpdated extends Listener {
     */
    async run(oldChannel, newChannel) {
       const client = this.container.client;
+      if (channelName.includes('ticket') || channelName.includes('closed')) return;
 
       // UPDATE CHANNELNAME
       if (oldChannel.name !== newChannel.name) {
