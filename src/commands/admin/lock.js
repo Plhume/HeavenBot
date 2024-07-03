@@ -71,17 +71,16 @@ class LockCommand extends Command {
 
         const logEmbed = new EmbedBuilder({
             title: 'Statut du salon > logs',
-            description: `Le salon a bien été ${newStatus ? 'verrouillé' : 'déverrouillé'} par <@${interaction.user.id}> !`,
+            description: `Le salon <#${interaction.channel.id}> a été ${newStatus ? '**verrouillé**' : '**déverrouillé**'} par <@${interaction.user.id}> !`,
             color: Colors.Aqua,
             timestamp: Date.now(),
             footer: {
                 text: '© 2024 | Heaven',
-                icon_url: client.user.avatarURL()
+                icon_url: this.container.client.user.avatarURL()
             }
         });
 
-        await client.guilds.cache.get(process.env.GUILD_ID).channels.cache.get(process.env.LOG_CHANNEL).send({
-            content: ``,
+        await this.container.client.guilds.cache.get(process.env.GUILD_ID).channels.cache.get(process.env.LOG_CHANNEL).send({
             embeds: [logEmbed]
         });
     }
