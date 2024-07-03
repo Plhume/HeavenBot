@@ -73,6 +73,13 @@ class LevelCommand extends Command {
             levels[user.id].level = level;
         }
 
+        try {
+            fs.writeFileSync(levelsPath, JSON.stringify(levels, null, 2), 'utf8');
+            console.log('Levels file written successfully.');
+        } catch (error) {
+            console.error('Error writing to levels file:', error);
+        }
+
         const userLevel = levels[user.id].level;
         const userExp = levels[user.id].exp;
         const nextLevelExp = getNextLevelExp(userLevel);
