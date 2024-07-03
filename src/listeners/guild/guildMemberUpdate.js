@@ -47,7 +47,7 @@ class GuildMemberUpdate extends Listener {
             content: ``,
             embeds: [embed]
          });
-      } 
+      }
 
       // UPDATE AVATAR
       else if (oldMember.user.avatarURL() !== newMember.user.avatarURL()) {
@@ -73,19 +73,21 @@ class GuildMemberUpdate extends Listener {
 
       // UPDATE ROLES
       else if (oldMember.roles.cache.size !== newMember.roles.cache.size) {
+         const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
+         const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
+
          const embed = new EmbedBuilder({
             title: '📝 | Logs',
             description: `Rôles de <@${oldMember.user.id}> modifiés`,
             fields: [
                {
-                  name: 'Ancien rôles',
-                  value: '<@&' + oldMember.roles.cache.map(role => role.id).join('>, <@&') + '>',
-                  inline: false
+                  name: `Rôle ${addedRoles.size > 0 ? 'ajouté' : 'supprimé'}`,
+                  value: addedRoles.size > 0 ? `<@&${addedRoles.map(role => role.id).join('>, <@&')}>`
+                     : `<@&${removedRoles.map(role => role.id).join('>, <@&')}>`,
                },
                {
-                  name: 'Nouveaux rôles',
-                  value: '<@&' + newMember.roles.cache.map(role => role.id).join('>, <@&') + '>',
-                  inline: false
+                  name: 'Rôles actuels',
+                  value: `<@&${newMember.roles.cache.map(role => role.id).slice(0, 5).join('>, <@&')}>${newMember.roles.cache.size > 5 ? '…' : ''}`,
                }
             ],
             color: Colors.Aqua,
