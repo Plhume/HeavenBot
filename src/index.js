@@ -63,6 +63,6 @@ rest.put(Routes.applicationCommands('1211584436634910761'), { body: [] })
     .catch(console.error);
     */
 
-ApplicationCommandRegistries.setDefaultGuildIds(['1020405855277023273']);
+ApplicationCommandRegistries.setDefaultGuildIds([process.env.GUILD_ID]);
 
 client.login(process.env.BOT_TOKEN);
