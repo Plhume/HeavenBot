@@ -12,6 +12,7 @@ class MessageUpdated extends Listener {
 
    async run(oldMessage, newMessage) {
       const client = this.container.client;
+      if (oldMessage.author.bot || newMessage.author.bot) return;
 
       const logEmbed = new EmbedBuilder({
          title: '📩 | Message édité > logs',

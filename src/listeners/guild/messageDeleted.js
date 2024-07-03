@@ -12,6 +12,7 @@ class MessageUpdated extends Listener {
 
    async run(message) {
       const client = this.container.client;
+      if (message.author.bot) return;
 
       const logEmbed = new EmbedBuilder({
          title: '📩 | Message supprimé > logs',
